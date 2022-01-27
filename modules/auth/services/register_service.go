@@ -24,8 +24,6 @@ func RegisterService(c *gin.Context, config *config.Config, dbClient *gorm.DB) {
 	if created := dbClient.Create(&models.User{
 		Email:    registerDto.Email,
 		Password: string(hashedPasswordBytes),
-		Name:     registerDto.Name,
-		Status:   registerDto.Name,
 	}); created.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"email": []string{"Email already exists"}})
 		return
