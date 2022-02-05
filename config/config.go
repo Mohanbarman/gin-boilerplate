@@ -7,6 +7,9 @@ import (
 type Config struct {
 	Database DatabaseConfig `mapstructure:"database"`
 	Server   ServerConfig   `mapstructure:"server"`
+	Redis    RedisConfig    `mapstructure:"redis"`
+	Jwt      JwtConfig      `mapstructure:"jwt"`
+	Smtp     SmtpConfig     `mapstructure:"smtp"`
 }
 
 func New() (config *Config) {
