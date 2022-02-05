@@ -2,17 +2,36 @@ package auth
 
 import (
 	"example.com/config"
+	"example.com/lib"
+	"example.com/lib/jwt"
 	"example.com/middlewares"
-	controllers "example.com/modules/auth/controllers"
-	dto "example.com/modules/auth/dto"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-// all routes of the module
 func InitRoutes(prefix string, rg *gin.RouterGroup, config *config.Config, db *gorm.DB) {
 	router := rg.Group(prefix)
 
-	router.POST("/login", middlewares.Validate(&dto.LoginDto{}), controllers.LoginController(config, db))
-	router.POST("/register", middlewares.Validate(&dto.RegisterDto{}), controllers.RegisterController(config, db))
+	jwtService := jwt.JwtService{Config: &config.Jwt}
+
+	authCtrl := AuthController{
+		Config: config,
+		DB:     db,
+		Service: &AuthService{
+			Config: config,
+			Db:     db,
+		},
+		Smtp:       &lib.MailClient{Config: &config.Smtp},
+		Redis:      lib.GetRedisClient("reset_password", &config.Redis),
+		JwtService: &jwtService,
+	}
+
+	authMiddleware := middlewares.AuthMiddleware{
+		Jwt: &jwtService,
+		DB:  db,
+	}
+
+	router.POST("/login", middlewares.Validate(&LoginDto{}), authCtrl.Login())
+	router.POST("/register", middlewares.Validate(&RegisterDto{}), authCtrl.Register())
+	router.GET("/me", authMiddleware.Validate(jwt.AccessToken), authCtrl.GetMe())
 }
